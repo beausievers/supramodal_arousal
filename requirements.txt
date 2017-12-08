@@ -1,0 +1,23 @@
+Python (2.7 and 3.x):
+
+bambi
+jupyter
+librosa
+matplotlib
+numpy
+pandas
+pymc3
+pystan
+scikit-image
+scikit-learn
+scipy
+seaborn
+statsmodels
+tabulate
+
+
+R:
+
+BayesianFirstAid
+ggplot2
+ggthemes

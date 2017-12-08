@@ -1,0 +1,5 @@
+leftImage,rightImage,audio
+angry.png,sad.png,clickemotionhard.wav
+sad.png,angry.png,clickemotionhard.wav
+angry.png,sad.png,clickemotionsoft.wav
+sad.png,angry.png,clickemotionsoft.wav
