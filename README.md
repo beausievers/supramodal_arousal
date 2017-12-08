@@ -26,7 +26,7 @@ This repository does **NOT** contain the [Berlin Database of Emotional Speech](h
 
 ## Citation
 
-Sievers, B., Lee, C., Haslett, W., & Wheatley, T. (2017, December 7). A supramodal code for emotional arousal. Retrieved from osf.io/t82wb
+Sievers, B., Lee, C., Haslett, W., & Wheatley, T. (2017, December 8). A supramodal code for emotional arousal. Retrieved from osf.io/t82wb
 
 ## License
 
@@ -34,4 +34,4 @@ This software is made available under a BSD-style license. See the `LICENSE` fil
 
 ## Last updated
 
-This document was last updated on December 7, 2017.
+This document was last updated on December 8, 2017.
