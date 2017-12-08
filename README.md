@@ -5,6 +5,7 @@
 Beau Sievers<sup>1</sup>, Caitlyn Lee<sup>1</sup>, William Haslett,<sup>2</sup> & Thalia Wheatley<sup>1</sup>
 
 <sup>1</sup> Department of Psychological and Brain Sciences, Dartmouth College, Hanover, NH 03755
+
 <sup>2</sup> Department of Biomedical Data Science, Geisel School of Medicine at Dartmouth, Hanover, NH 03755
 
 Correspondence to: Beau Sievers, 6207 Moore Hall, Dartmouth College, Hanover, NH 03755. beau.r.sievers.gr@dartmouth.edu
