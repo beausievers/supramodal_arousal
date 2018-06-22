@@ -16,7 +16,7 @@ This repository contains code, data, and materials for running the experiments a
 
 None of this code was written with the express intention of facilitating reproducible experimentation or analysis, and it is not being actively maintained. Extensive requirements are described in the file `requirements.txt`.
 
-This repository does **NOT** contain the [Berlin Database of Emotional Speech](http://emodb.bilderbar.info/start.html) or the [PACO Body Movement Library](http://paco.psy.gla.ac.uk/index.php/res/download-data/viewcategory/5-body-movement-library), both of which are required to run the analyses for Study 4.
+This repository does **NOT** contain the [Berlin Database of Emotional Speech](http://emodb.bilderbar.info/start.html) or the [PACO Body Movement Library](http://paco.psy.gla.ac.uk/index.php/res/download-data/viewcategory/5-body-movement-library), both of which are required to run the analyses for Study 4 and the experiment for Study 5.
 
 ## File structure
 
@@ -34,4 +34,4 @@ This software is made available under a BSD-style license. See the `LICENSE` fil
 
 ## Last updated
 
-This document was last updated on December 8, 2017.
+This document was last updated on June 22, 2018.
