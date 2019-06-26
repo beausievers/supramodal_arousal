@@ -27,7 +27,7 @@ All scripts were tested on Mac OS 10.14.5. Library requirements are listed in th
 
 ## Why don't the notebook and paper results match exactly?
 
-Because of the use of MCMC sampling and changes in required libraries that occured between manuscript drafting and final proofing the analysis notebooks in this repository will produce very slightly different results than those reported in the paper. Regrettably, we did not record the RNG seed or the version numbers of the libraries originally used. (Yarik, you were right!)
+Because of the use of MCMC sampling and changes in required libraries that occured between manuscript drafting and final proofing, the analysis notebooks in this repository will produce very slightly different results than those reported in the paper. Regrettably, we did not record the RNG seed or the version numbers of the libraries originally used. (Yarik, you were right!)
 
 ## File structure
 
