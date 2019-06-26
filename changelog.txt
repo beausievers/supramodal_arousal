@@ -1,1 +1,3 @@
 2017-12-07: Initial upload.
+2019-06-25: Modified notebooks to generate higher resolution figures. Updated dependencies
+            and fixed bugs introduced by the updated dependencies.
