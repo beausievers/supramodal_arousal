@@ -12,7 +12,7 @@ Correspondence to: Thalia Wheatley, 6207 Moore Hall, Dartmouth College, Hanover,
 
 ## About
 
-This repository contains code, data, and materials for running the experiments and analyses described in the paper "A supramodal code for emotional arousal," available at: https://osf.io/t82wb/
+This repository contains code, data, and materials for running the experiments and analyses described in the paper "A multi-sensory code for emotional arousal," available at: https://osf.io/t82wb/
 
 None of this code was written with the express intention of facilitating reproducible experimentation or analysis, and it is not being actively maintained.
 
