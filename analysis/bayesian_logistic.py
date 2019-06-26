@@ -8,10 +8,10 @@ import seaborn as sns
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
-from sklearn.cross_validation import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 import sklearn.metrics as metrics
 
-stan_string = '''
+stan_string = """
 data {
     int<lower = 0> N;
     vector[N] x;
@@ -24,7 +24,7 @@ parameters {
 model {
     y ~ bernoulli_logit(a + b * x);
 }
-'''
+"""
 
 
 def sigmoid(x):
@@ -56,7 +56,7 @@ class BayesianLogisticClassifierCV(object):
         self.n_folds = n_folds
         self.n_iter = n_iter
         self.n_chains = n_chains
-        self.cv = StratifiedKFold(y=self.y, n_folds=self.n_folds)
+        self.cv = StratifiedKFold(n_splits=self.n_folds)
         self.calculated_quantiles = False
 
     def fit(self):
@@ -66,25 +66,21 @@ class BayesianLogisticClassifierCV(object):
         self.fold_auc = []
         self.fold_clf = []
 
-        for train, test in self.cv:
+        for train, test in self.cv.split(self.X, self.y):
             clf = BayesianLogisticClassifier()
             clf.fit(
                 self.X[train].reshape(len(self.X[train]), 1),
                 self.y[train],
                 self.n_iter,
-                self.n_chains
+                self.n_chains,
             )
             test_probabilities = clf.predict(self.X[test])
             test_predictions = test_probabilities >= 0.5
-            self.fold_acc.append(
-                metrics.accuracy_score(self.y[test], test_predictions)
+            self.fold_acc.append(metrics.accuracy_score(self.y[test], test_predictions))
+            self.fold_roc.append(
+                metrics.roc_curve(self.y[test], test_probabilities, pos_label=True)
             )
-            self.fold_roc.append(metrics.roc_curve(self.y[test],
-                                                   test_probabilities,
-                                                   pos_label=True))
-            self.fold_auc.append(
-                metrics.roc_auc_score(self.y[test], test_predictions)
-            )
+            self.fold_auc.append(metrics.roc_auc_score(self.y[test], test_predictions))
             self.fold_clf.append(clf)
 
     def calculate_quantiles(self):
@@ -93,10 +89,21 @@ class BayesianLogisticClassifierCV(object):
             c.quantiles()
         self.calculated_quantiles = True
 
-    def plot_mean_model(self, xs, title=None, true_cat=None, false_cat=None,
-                        plot_data=True, plot_discriminant=True,
-                        accuracy_string=None, discriminant_label_offset=None,
-                        plot_means=True, x_label=None, y_label=None, ax=None):
+    def plot_mean_model(
+        self,
+        xs,
+        title=None,
+        true_cat=None,
+        false_cat=None,
+        plot_data=True,
+        plot_discriminant=True,
+        accuracy_string=None,
+        discriminant_label_offset=None,
+        plot_means=True,
+        x_label=None,
+        y_label=None,
+        ax=None,
+    ):
         """Plot the mean of all regression folds."""
         for c in self.fold_clf:
             c.predict(xs)
@@ -113,12 +120,12 @@ class BayesianLogisticClassifierCV(object):
         upper = np.mean(upper, axis=0)
         y_hat = np.mean(y_hat, axis=0)
 
-        sns.set_style('ticks')
-        sns.set_palette('muted')
+        sns.set_style("ticks")
+        sns.set_palette("muted")
 
         fsize = 14
         titlesize = 18
-        y_jitter = .05
+        y_jitter = 0.05
 
         if ax is None:
             f, ax = plt.subplots(figsize=(6, 3))
@@ -128,13 +135,11 @@ class BayesianLogisticClassifierCV(object):
         x_range = (np.min(xs), np.max(xs))
         x_ptp = np.ptp(xs)
         ax.set(
-            xlim=(x_range[0] - .1 * x_ptp, x_range[1] + .1 * x_ptp),
-            ylim=(-.1, 1.1)
+            xlim=(x_range[0] - 0.1 * x_ptp, x_range[1] + 0.1 * x_ptp), ylim=(-0.1, 1.1)
         )
 
-        ax.fill_between(xs, lower, upper,
-                        facecolor='lightgrey', edgecolor='none')
-        ax.plot(xs, y_hat, 'k')
+        ax.fill_between(xs, lower, upper, facecolor="lightgrey", edgecolor="none")
+        ax.plot(xs, y_hat, "k")
 
         if y_label is not None:
             ax.set_ylabel(y_label, fontsize=fsize)
@@ -148,9 +153,9 @@ class BayesianLogisticClassifierCV(object):
             ax.plot(
                 (boundary, boundary),
                 (0.0, 1.0),
-                'k--',
+                "k--",
                 linewidth=1,
-                color=sns.xkcd_rgb['grey']
+                color=sns.xkcd_rgb["grey"],
             )
             if discriminant_label_offset is None:
                 dlo = [0.025, 0.42]
@@ -164,7 +169,7 @@ class BayesianLogisticClassifierCV(object):
                 boundary + dlo[0] * x_ptp,
                 dlo[1],
                 "{0} accuracy\nboundary".format(accuracy_string),
-                fontsize=fsize
+                fontsize=fsize,
             )
 
         if plot_data:
@@ -172,14 +177,18 @@ class BayesianLogisticClassifierCV(object):
                 self.X[self.y],
                 1.0 + np.random.uniform(-y_jitter, y_jitter, len(self.X[self.y])),
                 c=my_red,
-                marker='^',
-                s=40, alpha=0.8, linewidth=0
+                marker="^",
+                s=40,
+                alpha=0.8,
+                linewidth=0,
             )
             ax.scatter(
                 self.X[~self.y],
                 0.0 + np.random.uniform(-y_jitter, y_jitter, len(self.X[~self.y])),
                 c=my_blue,
-                s=40, alpha=0.8, linewidth=0
+                s=40,
+                alpha=0.8,
+                linewidth=0,
             )
 
         if plot_means:
@@ -189,14 +198,16 @@ class BayesianLogisticClassifierCV(object):
             ci_true = sp.stats.bayes_mvs(self.X[self.y])[0][1]
             ci_false = sp.stats.bayes_mvs(self.X[~self.y])[0][1]
 
-            ax.plot([ci_true[0], ci_true[1]], [1.0, 1.0], 'k-', linewidth=3)
-            ax.plot([ci_false[0], ci_false[1]], [0.0, 0.0], 'k-', linewidth=3)
-            ax.plot([mean_true, mean_false], [1.0, 0.0], marker='o', color='k', linewidth=0)
+            ax.plot([ci_true[0], ci_true[1]], [1.0, 1.0], "k-", linewidth=3)
+            ax.plot([ci_false[0], ci_false[1]], [0.0, 0.0], "k-", linewidth=3)
+            ax.plot(
+                [mean_true, mean_false], [1.0, 0.0], marker="o", color="k", linewidth=0
+            )
 
         if true_cat is not None:
-            ax.text(x_range[1] + .125 * x_ptp, 1.0, true_cat, fontsize=fsize)
+            ax.text(x_range[1] + 0.125 * x_ptp, 1.0, true_cat, fontsize=fsize)
         if false_cat is not None:
-            ax.text(x_range[1] + .125 * x_ptp, 0.0, false_cat, fontsize=fsize)
+            ax.text(x_range[1] + 0.125 * x_ptp, 0.0, false_cat, fontsize=fsize)
 
         if title is not None:
             ax.set_title(title, fontsize=titlesize)
@@ -214,47 +225,58 @@ class BayesianLogisticClassifierCV(object):
 
         for c in self.fold_clf:
             c.plot_regression(
-                plot_data=False,
-                plot_discriminant=False,
-                plot_means=False,
-                ax=ax
+                plot_data=False, plot_discriminant=False, plot_means=False, ax=ax
             )
 
-    def plot_roc(self, ax=None):
+    def plot_roc(self, ax=None, auc_string=None):
         """Plot the mean ROC."""
-        plot_roc(self.fold_roc, display_cv_folds=False, ax=ax)
+        plot_roc(self.fold_roc, display_cv_folds=False, auc_string=auc_string, ax=ax)
 
-    def plot_all(self, xs=None, title=None, true_cat=None, false_cat=None,
-                 reg_x_label=None, reg_y_label=None,
-                 discriminant_label_offset=None, small=False):
+    def plot_all(
+        self,
+        xs=None,
+        title=None,
+        true_cat=None,
+        false_cat=None,
+        reg_x_label=None,
+        reg_y_label=None,
+        discriminant_label_offset=None,
+        accuracy_string=None,  # option for publication-ready images
+        auc_string=None,  # option for publication-ready images
+        small=False,
+        dpi=None,
+    ):
         """Plot both the mean model and the mean ROC with default settings."""
         if small:
-            plt.figure(figsize=(10, 1.5))
+            plt.figure(figsize=(10, 1.5), dpi=dpi)
         else:
-            plt.figure(figsize=(10, 3))
+            plt.figure(figsize=(10, 3), dpi=dpi)
         plt.subplots_adjust(wspace=0.45)
         gs = gridspec.GridSpec(1, 2, width_ratios=[2, 1])
         ax0 = plt.subplot(gs[0])
         ax1 = plt.subplot(gs[1])
 
         if xs is None:
-            range_5p = (np.max(self.X) - np.min(self.X)) * .05
+            range_5p = (np.max(self.X) - np.min(self.X)) * 0.05
             xs_max = np.max(self.X) + range_5p
             xs_min = np.min(self.X) - range_5p
             xs = np.linspace(xs_min, xs_max, 100)
 
-        sns.set_style('ticks')
-        sns.set_palette('muted')
+        sns.set_style("ticks")
+        sns.set_palette("muted")
 
-        self.plot_mean_model(xs=xs,
-                             true_cat=true_cat,
-                             false_cat=false_cat,
-                             title=title,
-                             x_label=reg_x_label,
-                             y_label=reg_y_label,
-                             discriminant_label_offset=discriminant_label_offset,
-                             ax=ax0)
-        self.plot_roc(ax=ax1)
+        self.plot_mean_model(
+            xs=xs,
+            true_cat=true_cat,
+            false_cat=false_cat,
+            title=title,
+            x_label=reg_x_label,
+            y_label=reg_y_label,
+            discriminant_label_offset=discriminant_label_offset,
+            accuracy_string=accuracy_string,
+            ax=ax0,
+        )
+        self.plot_roc(ax=ax1, auc_string=auc_string)
 
 
 class BayesianLogisticClassifier(BaseEstimator, ClassifierMixin):
@@ -278,12 +300,12 @@ class BayesianLogisticClassifier(BaseEstimator, ClassifierMixin):
 
         self.stan_ = stan_fit(self.stan_X_, self.y_, iter, chains)
         self.stan_params_ = {
-            'a': self.stan_.extract('a', permuted=True)['a'],
-            'b': self.stan_.extract('b', permuted=True)['b']
+            "a": self.stan_.extract("a", permuted=True)["a"],
+            "b": self.stan_.extract("b", permuted=True)["b"],
         }
         self.mean_params_ = [
-            np.mean(self.stan_params_['a']),
-            np.mean(self.stan_params_['b'])
+            np.mean(self.stan_params_["a"]),
+            np.mean(self.stan_params_["b"]),
         ]
 
         return self
@@ -293,7 +315,7 @@ class BayesianLogisticClassifier(BaseEstimator, ClassifierMixin):
 
         Run after self.predict().
         """
-        pairs = np.array([self.stan_params_['a'], self.stan_params_['b']]).T
+        pairs = np.array([self.stan_params_["a"], self.stan_params_["b"]]).T
 
         self.chain_preds_ = []
         for pair in pairs:
@@ -325,15 +347,23 @@ class BayesianLogisticClassifier(BaseEstimator, ClassifierMixin):
         correct = predicted_classes == y
         return np.mean(correct)
 
-    def plot_regression(self, title=None, true_cat=None, false_cat=None,
-             plot_data=True, plot_discriminant=True, plot_means=True, ax=None):
+    def plot_regression(
+        self,
+        title=None,
+        true_cat=None,
+        false_cat=None,
+        plot_data=True,
+        plot_discriminant=True,
+        plot_means=True,
+        ax=None,
+    ):
         """Plot the logistic regression using Seaborn."""
-        sns.set_style('ticks')
-        sns.set_palette('muted')
+        sns.set_style("ticks")
+        sns.set_palette("muted")
 
         fsize = 14
         titlesize = 18
-        y_jitter = .05
+        y_jitter = 0.05
 
         if ax is None:
             f, ax = plt.subplots(figsize=(6, 3))
@@ -343,22 +373,26 @@ class BayesianLogisticClassifier(BaseEstimator, ClassifierMixin):
         x_range = (np.min(self.predict_X_), np.max(self.predict_X_))
         x_ptp = np.ptp(self.predict_X_)
         ax.set(
-            xlim=(x_range[0] - .1 * x_ptp, x_range[1] + .1 * x_ptp),
-            ylim=(-.1, 1.1)
+            xlim=(x_range[0] - 0.1 * x_ptp, x_range[1] + 0.1 * x_ptp), ylim=(-0.1, 1.1)
         )
 
-        ax.fill_between(self.predict_X_, self.lower_qs_, self.upper_qs_,
-                        facecolor='lightgrey', edgecolor='none')
-        ax.plot(self.predict_X_, self.predict_y_, 'k')
+        ax.fill_between(
+            self.predict_X_,
+            self.lower_qs_,
+            self.upper_qs_,
+            facecolor="lightgrey",
+            edgecolor="none",
+        )
+        ax.plot(self.predict_X_, self.predict_y_, "k")
 
         if plot_discriminant:
             idx = find_nearest_index(self.predict_y_, 0.5)
             ax.plot(
                 (self.predict_X_[idx], self.predict_X_[idx]),
                 (0.0, 1.0),
-                'k--',
+                "k--",
                 linewidth=1,
-                color=sns.xkcd_rgb['grey']
+                color=sns.xkcd_rgb["grey"],
             )
 
         if plot_data:
@@ -366,15 +400,19 @@ class BayesianLogisticClassifier(BaseEstimator, ClassifierMixin):
                 self.X_[self.y_],
                 1.0 + np.random.uniform(-y_jitter, y_jitter, len(self.X_[self.y_])),
                 c=my_red,
-                marker='^',
-                s=40, alpha=0.8, linewidth=0
+                marker="^",
+                s=40,
+                alpha=0.8,
+                linewidth=0,
             )
             ax.scatter(
                 self.X_[~self.y_],
                 0.0 + np.random.uniform(-y_jitter, y_jitter, len(self.X_[~self.y_])),
                 c=my_blue,
-                marker='^',
-                s=40, alpha=0.8, linewidth=0
+                marker="^",
+                s=40,
+                alpha=0.8,
+                linewidth=0,
             )
 
         if plot_means:
@@ -384,14 +422,16 @@ class BayesianLogisticClassifier(BaseEstimator, ClassifierMixin):
             ci_true = sp.stats.bayes_mvs(self.X_[self.y_])[0][1]
             ci_false = sp.stats.bayes_mvs(self.X_[~self.y_])[0][1]
 
-            ax.plot([ci_true[0], ci_true[1]], [1.0, 1.0], 'k-', linewidth=3)
-            ax.plot([ci_false[0], ci_false[1]], [0.0, 0.0], 'k-', linewidth=3)
-            ax.plot([mean_true, mean_false], [1.0, 0.0], marker='o', color='k', linewidth=0)
+            ax.plot([ci_true[0], ci_true[1]], [1.0, 1.0], "k-", linewidth=3)
+            ax.plot([ci_false[0], ci_false[1]], [0.0, 0.0], "k-", linewidth=3)
+            ax.plot(
+                [mean_true, mean_false], [1.0, 0.0], marker="o", color="k", linewidth=0
+            )
 
         if true_cat is not None:
-            ax.text(x_range[1] + .125 * x_ptp, 1.0, true_cat, fontsize=fsize)
+            ax.text(x_range[1] + 0.125 * x_ptp, 1.0, true_cat, fontsize=fsize)
         if false_cat is not None:
-            ax.text(x_range[1] + .125 * x_ptp, 0.0, false_cat, fontsize=fsize)
+            ax.text(x_range[1] + 0.125 * x_ptp, 0.0, false_cat, fontsize=fsize)
 
         if title is not None:
             ax.set_title(title, fontsize=titlesize)
@@ -402,15 +442,16 @@ class BayesianLogisticClassifier(BaseEstimator, ClassifierMixin):
 def bayesian_logistic(x, y, prediction_range=None, prediction_resolution=100):
     """Generate the Stan model along with important derivative values."""
     fit = stan_fit(x, y)
-    params = pd.DataFrame({
-        'a': fit.extract('a', permuted=True)['a'],
-        'b': fit.extract('b', permuted=True)['b']
-    })
+    params = pd.DataFrame(
+        {
+            "a": fit.extract("a", permuted=True)["a"],
+            "b": fit.extract("b", permuted=True)["b"],
+        }
+    )
     mean_params = params.mean()
     if prediction_range is None:
         prediction_range = (np.min(x), np.max(x))
-    xs = np.linspace(prediction_range[0], prediction_range[1],
-                     prediction_resolution)
+    xs = np.linspace(prediction_range[0], prediction_range[1], prediction_resolution)
     y_hat = predict(mean_params, xs)
 
     def predict_curried(params):
@@ -424,13 +465,13 @@ def bayesian_logistic(x, y, prediction_range=None, prediction_resolution=100):
     lower_qs = chain_quantiles(2.5, chain_preds, xs)
     upper_qs = chain_quantiles(97.5, chain_preds, xs)
     return {
-        'fit': fit,
-        'params': params,
-        'mean_params': mean_params,
-        'xs': xs,
-        'y_hat': y_hat,
-        'lower_qs': lower_qs,
-        'upper_qs': upper_qs
+        "fit": fit,
+        "params": params,
+        "mean_params": mean_params,
+        "xs": xs,
+        "y_hat": y_hat,
+        "lower_qs": lower_qs,
+        "upper_qs": upper_qs,
     }
 
 
@@ -450,33 +491,28 @@ def predict(params, x):
 
 def stan_fit(x, y, iter=5000, chains=4):
     """Given predictor x and responses y, return a Stan fit object."""
-    stan_data = {
-        'x': x,
-        'y': [int(b) for b in y],
-        'N': len(x)
-    }
-    return pystan.stan(model_code=stan_string, data=stan_data, iter=iter,
-                       chains=chains)
+    stan_data = {"x": x, "y": [int(b) for b in y], "N": len(x)}
+    return pystan.stan(model_code=stan_string, data=stan_data, iter=iter, chains=chains)
 
 
-def get_p_string(p_value, prepend=''):
+def get_p_string(p_value, prepend=""):
     """Return a string expressing a p-value."""
     if p_value is None:
-        p_string = ''
-    elif p_value < .001:
+        p_string = ""
+    elif p_value < 0.001:
         p_string = "{0}p < .001".format(prepend)
     else:
-        p_formatted = "{0:.2g}".format(p_value).lstrip('0')
+        p_formatted = "{0:.2g}".format(p_value).lstrip("0")
         p_string = "{0}p = {1}".format(prepend, p_formatted)
     return p_string
 
 
-def plot_roc(roc_folds, display_cv_folds=True, p_auc=None, ax=None):
+def plot_roc(roc_folds, display_cv_folds=True, p_auc=None, auc_string=None, ax=None):
     """Plot the mean of a list of sklearn ROC curves."""
     fpr_folds = [x[0] for x in roc_folds]
     tpr_folds = [x[1] for x in roc_folds]
 
-    sns.set_style('ticks')
+    sns.set_style("ticks")
     sns.set_palette("husl", len(fpr_folds))
 
     fsize = 14
@@ -485,8 +521,8 @@ def plot_roc(roc_folds, display_cv_folds=True, p_auc=None, ax=None):
     if ax is None:
         f, ax = plt.subplots(1, 1, figsize=(3, 3))
 
-    ax.set_xlim(-.1, 1.1)
-    ax.set_ylim(-.1, 1.1)
+    ax.set_xlim(-0.1, 1.1)
+    ax.set_ylim(-0.1, 1.1)
     ax.tick_params(labelsize=fsize)
     ax.set_xlabel("False Positive Rate", fontsize=fsize)
     ax.set_ylabel("True Positive Rate", fontsize=fsize)
@@ -496,7 +532,7 @@ def plot_roc(roc_folds, display_cv_folds=True, p_auc=None, ax=None):
 
     fold_aucs = []
 
-    ax.plot([0, 1], [0, 1], 'k--')
+    ax.plot([0, 1], [0, 1], "k--")
 
     for fpr, tpr in zip(fpr_folds, tpr_folds):
         fold_auc = metrics.auc(fpr, tpr)
@@ -514,7 +550,9 @@ def plot_roc(roc_folds, display_cv_folds=True, p_auc=None, ax=None):
 
     ax.plot(mean_fpr, mean_tpr, c=sns.xkcd_rgb["dark grey"], linewidth=2.5)
 
-    p_string = get_p_string(p_auc, prepend=', ')
-    ax.set_title("AUC = {0:.2g}{1}".format(mean_auc, p_string),
-                 fontsize=titlesize)
+    if auc_string is None:
+        auc_string = "{0:.2g}".format(mean_auc)
+
+    p_string = get_p_string(p_auc, prepend=", ")
+    ax.set_title("AUC = {0}{1}".format(auc_string, p_string), fontsize=titlesize)
     sns.despine(left=True, bottom=True)

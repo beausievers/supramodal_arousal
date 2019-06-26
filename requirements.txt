@@ -1,30 +1,15 @@
-Python (2.7 and 3.x):
+JAGS 4.3.0
+    available at: http://mcmc-jags.sourceforge.net/
 
-bambi
-jupyter
-librosa
-matplotlib
-numpy
-pandas
-pymc3
-pystan
-scikit-image
-scikit-learn
-scipy
-seaborn
-statsmodels
-tabulate
+R 3.6.0:
+    BayesianFirstAid 0.1
+        available at: https://github.com/rasmusab/bayesian_first_aid
+    ggplot2 3.2.0
+    ggthemes 4.2.0
 
-
-R:
-
-BayesianFirstAid
-ggplot2
-ggthemes
-
-MATLAB:
-
-dlmcell.m
-    available at: https://www.mathworks.com/matlabcentral/fileexchange/25387-write-cell-array-to-text-file
-csvimport.m
-    available at: https://www.mathworks.com/matlabcentral/fileexchange/23573-csvimport
+MATLAB 9.4:
+    dlmcell.m
+        available at: https://www.mathworks.com/matlabcentral/fileexchange/25387-write-cell-array-to-text-file
+    csvimport.m
+        available at: https://www.mathworks.com/matlabcentral/fileexchange/23573-csvimport
+        
